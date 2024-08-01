@@ -122,8 +122,11 @@
                 const sound = this.playingSound;
                 // Play mp3 sounds/{sound}.mp3
                 const audio = new Audio(`sounds/${sound}.mp3`);
-                audio.play();
-                this.playingSound = sound;
+                // Buffer audio
+                audio.load();
+                setTimeout(() => {
+                    audio.play();
+                }, 100);
             },
             splitToSounds(passedWordpart) {
                 // Given e.g. "käärme" return ["kää", "r", "me"]

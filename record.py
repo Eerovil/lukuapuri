@@ -5,7 +5,7 @@ import numpy as np
 from collections import deque
 
 # Define the list of sounds to record
-letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'ö']
+letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'y', 'ä', 'ö']
 
 vowels = ['a', 'e', 'i', 'o', 'u', 'y', 'ä', 'ö']
 

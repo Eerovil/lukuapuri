@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+        integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+        crossorigin="anonymous"></script>
+    <script type="text/javascript" src="finnishhyphenator.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="manifest" href="manifest.json">
+
+    <title>Sanat</title>
+    <style>
+        body,
+        html {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: ui-monospace;
+        }
+    </style>
+</head>
+
+<body>
+<div id="vue-app">
+</div>
+<script type="template/html" id="template">
+    <div id="app-wrapper">
+        <div id="app">
+            <h1>{{ hyphenatedText }}</h1>
+            <h1>{{ soundHyphenated }}</h1>
+            <button @click="say(text)">Puhu</button>
+        </div>
+    </div>
+</script>
+
+<script>
+    var app = new Vue({
+        el: '#vue-app',
+        template: "#template",
+        data: () => ({
+            text: "Muistatko vielä, miltä lapsuuden taianomaiset talvipäivät tuntuivat? Anneka Ahoniemen kirjoittama ja kuvittama lämminhenkinen satu kertoo korkeista kinoksista, lumisista tumpuista ja äidin lämpimistä korvapuusteista. Pakkaspäivän jälkeen on ihana kääriytyä vilttiin ja nauraa yhdessä kuorsaaville lumisammakoille."
+        }),
+
+        mounted() {
+            
+        },
+
+        computed: {
+            hyphenatedText() {
+                const ret = this.hyphenate(this.text);
+                return ret.toUpperCase();
+            },
+            soundHyphenated() {
+                const words = this.text.split(' ');
+                const ret = words.map(word => {
+                    const sounds = this.splitToSounds(word);
+                    return sounds.join('-');
+                }).join(' ');
+                return ret;
+            }
+        },
+
+        methods: {
+            splitToSounds(passedWordpart) {
+                // Given e.g. "käärme" return ["kää", "r", "me"]
+                // This uses recursion like this:
+                // "käärme" -> find it starts with kää. (consonant + vowel pair)
+                // "rme" -> find it starts with r with consonant following
+                // "me" -> find it starts with m with vowel following
+                const vowels = "aeiouyåäö";
+                const consonants = "bcdfghjklmnpqrstvwxz";
+                // Remove all non-alphabets
+                const syllable = passedWordpart.toLowerCase().split('').filter(c => vowels.includes(c) || consonants.includes(c)).join('');
+                if (syllable.length < 2) {
+                    return [syllable];
+                }
+                const returnUpTo = (index) => {
+                    if (index == syllable.length) {
+                        return [syllable];
+                    }
+                    return [syllable.substring(0, index), ...this.splitToSounds(syllable.substring(index))];
+                }
+                if (consonants.includes(syllable[0])) {
+                    // Consonant starting
+                    if (vowels.includes(syllable[1])) {
+                        // Consonant + vowel
+                        // Check if next is same vowel
+                        if (syllable.length > 2 && syllable[1] == syllable[2]) {
+                            // Found the sound
+                            return returnUpTo(3);
+                        }
+                        // Otherwise return consonant + vowel
+                        return returnUpTo(2);
+                    }
+                    // Consonant + consonant
+                    // Usually letter per sound. TODO: check this
+                    return returnUpTo(1);
+                }
+
+                // Vowel starting
+                // Usually letter per sound. TODO: check this
+                return returnUpTo(1);
+            },
+            hyphenate(text) {
+                const hyphernator = new window.FinnishHyphenator();
+                return hyphernator.hyphenateText(text);
+            },
+            say(m) {
+                const speak = (text) => {
+                    let myText = (text || '').toLowerCase()
+                    myText = myText.replace(/nn$/g, 'n');
+                    myText = myText.replace(/mm$/g, 'm');
+                    const utter = new SpeechSynthesisUtterance();
+                    utter.lang = 'fi-FI';
+                    utter.text = myText;
+                    utter.rate = 0.5;
+                    utter.pitch = 0.9;
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utter);
+                }
+
+                if ((m || '').trim().length == 0) {
+                    return;
+                }
+                speak(m)
+            },
+            
+        },
+    });
+</script>
+
+</body>
+</html>

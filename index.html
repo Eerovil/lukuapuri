@@ -21,6 +21,17 @@
             padding: 0;
             font-family: ui-monospace;
         }
+        .main-text {
+            font-size: 2em;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .sound-part:nth-child(odd) {
+            background-color: #cdcdcd;
+        }
+        .sound-part:nth-child(even) {
+            background-color: #f3f3f3;
+        }
     </style>
 </head>
 
@@ -30,9 +41,26 @@
 <script type="template/html" id="template">
     <div id="app-wrapper">
         <div id="app">
-            <h1>{{ hyphenatedText }}</h1>
-            <h1>{{ soundHyphenated }}</h1>
-            <button @click="say(text)">Puhu</button>
+            <h1 class="main-text">
+                <span v-for="word in soundSplitted">
+                    <span v-for="(sound, index) in word" class="sound-part">
+                        <span
+                            @click="selectSound(sound)"
+                            :style="{backgroundColor: playingSound == sound ? '#85ff85' : ''}"
+                        >{{sound}}</span>
+                    </span>
+                    <span> </span>
+                </span>
+                <h1 v-if="playingSound">
+                    {{ playingSound }}
+                </h1>
+                <h2 v-if="playingSound">
+                    <button @click="playSound">Play</button>
+                </h2>
+                <h2>
+                    <button @click="nextWord">Next</button> 
+                </h2>
+            </h1>
         </div>
     </div>
 </script>
@@ -42,11 +70,28 @@
         el: '#vue-app',
         template: "#template",
         data: () => ({
-            text: "Muistatko vielä, miltä lapsuuden taianomaiset talvipäivät tuntuivat? Anneka Ahoniemen kirjoittama ja kuvittama lämminhenkinen satu kertoo korkeista kinoksista, lumisista tumpuista ja äidin lämpimistä korvapuusteista. Pakkaspäivän jälkeen on ihana kääriytyä vilttiin ja nauraa yhdessä kuorsaaville lumisammakoille."
+            playingSound: null,
+            text: "",
+            wordList: (
+                "hiihtää luistella ratsastaa uida laastari silmälasit oranssi keltainen ratikka moottoripyörä kirkko meri peruna " +
+                "saippua saippuakupla " + 
+                "jogurtti täytekakku sipuli " +
+                "hamsteri lammas kana kukko " + 
+                "marsu undulaatti tipu ankka hanhi " +
+                "akvaario lehmä hevonen kalkkuna varis harakka " +
+                "poni sika vuohi talitiainen pöllö " +
+                "sorsa papukaija muurahainen ilves jänis susi hämähäkki heinäsirkka hyttynen kettu karhu hirvi " +
+                "sudenkorento ampiainen mato poro leijona tiikeri " +
+                "sammakko käärme lisko leopardi kirahvi sarvikuono virtahepo elefantti apina villasukat " +
+                "tossut hellehattu lippalakki sukat paita housut kengät sateenvarjo pipo lapaset tietokone hylly matto verhot kännykkä kamera ovi ikkuna seinä pöytä sohva nojatuoli lattia katto lamppu kaappi lipasto peitto tyyny pallo nukke kynä paperi teroitin päärynä omena hampurilainen makkara lasi muki voi juusto haarukka veitsi lusikka ketsuppi sinappi"
+            ),
+            wordIndex: 0,
         }),
 
         mounted() {
-            
+            // Randomize wordlist
+            this.wordList = this.wordList.split(' ').sort(() => Math.random() - 0.5);
+            this.text = this.wordList[this.wordIndex];
         },
 
         computed: {
@@ -54,17 +99,32 @@
                 const ret = this.hyphenate(this.text);
                 return ret.toUpperCase();
             },
-            soundHyphenated() {
+            soundSplitted() {
                 const words = this.text.split(' ');
                 const ret = words.map(word => {
                     const sounds = this.splitToSounds(word);
-                    return sounds.join('-');
-                }).join(' ');
-                return ret;
+                    return sounds.map(sound => sound.toUpperCase());
+                });
+                return ret
             }
         },
 
         methods: {
+            nextWord() {
+                this.wordIndex = (this.wordIndex + 1) % this.wordList.length;
+                this.text = this.wordList[this.wordIndex];
+                this.selectSound(null);
+            },
+            selectSound(sound) {
+                this.playingSound = sound;
+            },
+            playSound() {
+                const sound = this.playingSound;
+                // Play mp3 sounds/{sound}.mp3
+                const audio = new Audio(`sounds/${sound}.mp3`);
+                audio.play();
+                this.playingSound = sound;
+            },
             splitToSounds(passedWordpart) {
                 // Given e.g. "käärme" return ["kää", "r", "me"]
                 // This uses recursion like this:
